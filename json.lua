@@ -90,18 +90,24 @@ local function is_valid_string_char(str)
     return str ~= tokens.quote and str ~= tokens.comma and not is_whitespace(str)
 end
 
-local function next_token(str, index)
+local function next_token(str, index, forceStr)
     local len = string.len(str)
 
     local frontIndex = index
     local backIndex = index
+
+    local is_char_func = is_char
+
+    if forceStr then
+        is_char_func = is_valid_string_char
+    end
 
     while frontIndex <= len do
         local front = str:sub(frontIndex, backIndex)
 
         if is_token(front) then
             return { value = front, __type = types.syntax }, frontIndex + 1
-        elseif is_char(front) then
+        elseif is_char_func(front) then
             while backIndex <= len and
                   is_valid_string_char(str:sub(backIndex, backIndex)) do
                 backIndex = backIndex + 1
@@ -141,7 +147,7 @@ local function parse_string(str, index)
         return nil, nil, gen_error("Expected opening quote", index)
     end
 
-    local strToken, index, err = next_token(str, index)
+    local strToken, index, err = next_token(str, index, true)
 
     if err ~= nil then return nil, nil, err end
     if strToken.__type ~= types.string then
