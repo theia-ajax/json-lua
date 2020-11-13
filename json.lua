@@ -1,18 +1,14 @@
 --[[
 The MIT License (MIT)
-
 Copyright (c) 2014 Ted Dobyns
-
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
-
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
-
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -44,10 +40,6 @@ local table_types = {
     array = 0,
     object = 1
 }
-
-local function print_error(err)
-    print(string.format("Error parsing JSON: %s", err))
-end
 
 local function gen_error(err, index)
     return string.format("%s at index %d.", err, index)
@@ -138,11 +130,11 @@ local function next_token(str, index, forceStr)
     return nil, frontIndex
 end
 
-local function parse_string(str, index)
+function parse_string(str, index)
     local lquote, index, err = next_token(str, index)
 
     if err ~= nil then return nil, nil, err end
-
+    
     if lquote.value ~= tokens.quote then
         return nil, nil, gen_error("Expected opening quote", index)
     end
@@ -165,7 +157,7 @@ local function parse_string(str, index)
     return strToken.value, index
 end
 
-local function parse_value(str, index)
+function parse_value(str, index)
     local token, i, err = next_token(str, index)
 
     if err ~= nil then return nil, nil, err end
@@ -183,7 +175,7 @@ local function parse_value(str, index)
     return token.value, i
 end
 
-local function parse_array(str, index)
+function parse_array(str, index)
     local result = {}
     local foundComma = true
 
@@ -215,9 +207,9 @@ local function parse_array(str, index)
             local value = nil
             if next.__type == types.syntax then
                 if next.value == tokens.leftBracket then
-                    value, index, err = parse_array(str, index)
-                elseif next.value == tokesn.leftBrace then
-                    value, index, err = parse_object(str, index)
+                    value, index, err = parse_array(str, i)
+                elseif next.value == tokens.leftBrace then
+                    value, index, err = parse_object(str, i)
                 else
                     return nil, nil, gen_error("Unexpected symbol", index)
                 end
@@ -232,7 +224,7 @@ local function parse_array(str, index)
     end
 end
 
-local function parse_object(str, index)
+function parse_object(str, index)
     local result = {}
     local foundComma = true
 
@@ -240,6 +232,8 @@ local function parse_object(str, index)
         local token, i, err = next_token(str, index)
 
         if err ~= nil then return nil, nil, err end
+
+        deep_log(token)
 
         if token.value == tokens.comma then
             index = i
@@ -437,28 +431,26 @@ local function decode(jsonstr)
     token, index, err = next_token(jsonstr, 1)
 
     if err ~= nil then
-        print_error(err)
-        return nil
+        return nil, err
     end
 
     result = nil
 
     if token.__type == types.syntax then
         if token.value == tokens.leftBrace then
-            result, index, err = parse_object(jsonstr, 2)
+            result, index, err = parse_object(jsonstr, index)
         elseif token.value == tokens.leftBracket then
-            result, index, err = parse_array(jsonstr, 2)
+            result, index, err = parse_array(jsonstr, index)
         end
     else
-        print_error("Not a valid JSON object.")
+        return nil, gen_error("Not a valid JSON object.")
     end
 
     if err ~= nil then
-        print_error(err)
-        return nil
+        return nil, err
     end
 
-    return result
+    return result, nil
 end
 
 local function encode(table, minify)

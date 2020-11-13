@@ -33,6 +33,13 @@ print("whoa")
 for k, v in pairs(im_back) do
     print(k.." "..tostring(v))
 end
+
+-- if decode fails it will return nil and an error message
+result, error = json.decode("[}"); -- invalid json
+
+if error ~= nil then
+    print(error) -- prints an invalid json object error
+end
 ```
 
 **Encode**
