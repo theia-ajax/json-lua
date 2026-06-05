@@ -85,7 +85,7 @@ License
 
 The MIT License (MIT)
 
-Copyright (c) 2014 Ted Dobyns
+Copyright (c) 2026 Theia Dobyns
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
